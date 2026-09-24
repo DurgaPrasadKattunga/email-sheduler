@@ -1,0 +1,26 @@
+{
+  "name": "email-scheduler-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Production-grade Full-Stack Email Job Scheduler",
+  "scripts": {
+    "dev:backend": "npm run dev --prefix backend",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "build:backend": "npm run build --prefix backend",
+    "build:frontend": "npm run build --prefix frontend",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f"
+  },
+  "keywords": [
+    "email-scheduler",
+    "bullmq",
+    "redis",
+    "postgres",
+    "elasticsearch",
+    "nextjs",
+    "express"
+  ],
+  "author": "",
+  "license": "ISC"
+}
