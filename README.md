@@ -4,6 +4,19 @@ A high-performance, fault-tolerant, and distributed email outreach job scheduler
 
 ---
 
+## 🌐 Live Deployed Application & Cloud Infrastructure
+
+| Resource | Live Production Link | Description |
+|---|---|---|
+| **🚀 Live Frontend App** | **[https://frontend-prasad-19bc.vercel.app](https://frontend-prasad-19bc.vercel.app)** | Production Next.js 14 web dashboard (Figma matching UI) |
+| **⚡ Live Backend API** | **[https://email-scheduler-backend-jsiz.onrender.com](https://email-scheduler-backend-jsiz.onrender.com)** | Express REST API & BullMQ worker cluster |
+| **🩺 Health Telemetry** | **[https://email-scheduler-backend-jsiz.onrender.com/health](https://email-scheduler-backend-jsiz.onrender.com/health)** | Live deep dependency health check (Postgres, Redis, Elasticsearch) |
+| **📊 Bull Board Dashboard** | **[https://email-scheduler-backend-jsiz.onrender.com/admin/queues](https://email-scheduler-backend-jsiz.onrender.com/admin/queues)** | Real-time queue observability & worker telemetry |
+| **📬 Live Ethereal Mailbox** | **[https://ethereal.email/messages](https://ethereal.email/messages)** | `ashlee.lang@ethereal.email` / `vsjNCbWDDqfgHVzVDG` |
+| **👥 Reviewers Granted** | `mitrajit` & `Yadav036` | Private GitHub repository collaborators invited |
+
+---
+
 ## 📑 Table of Contents
 
 1. [Executive Summary & System Highlights](#-executive-summary--system-highlights)
