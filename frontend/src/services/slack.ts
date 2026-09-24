@@ -20,9 +20,14 @@ export const slackService = {
     }
   },
 
-  getConnectUrl: (): string => {
+  getConnectUrl: (userId?: string): string => {
     const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-    return `${baseUrl}/api/slack/connect`;
+    return `${baseUrl}/api/slack/auth${userId ? `?userId=${userId}` : ''}`;
+  },
+
+  sendTestAlert: async () => {
+    const response = await api.post('/api/slack/test-alert');
+    return response.data;
   },
 
   disconnect: async () => {

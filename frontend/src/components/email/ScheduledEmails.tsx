@@ -1,181 +1,115 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Email } from '../../types/email';
-import { emailService } from '../../services/email';
-import { Clock, Search, RefreshCw, XCircle, AlertTriangle, Play, Sparkles } from 'lucide-react';
+import { Clock, Star, AlertCircle, Sparkles } from 'lucide-react';
 
 interface ScheduledEmailsProps {
   emails: Email[];
   loading: boolean;
-  onRefresh: () => void;
-  onSearch: (query: string) => void;
-  searchQuery: string;
+  onCancel: (id: string) => Promise<void>;
+  onSelectEmail?: (email: Email) => void;
 }
 
 export const ScheduledEmails: React.FC<ScheduledEmailsProps> = ({
   emails,
   loading,
-  onRefresh,
-  onSearch,
-  searchQuery,
+  onCancel,
+  onSelectEmail,
 }) => {
-  const [cancellingId, setCancellingId] = useState<string | null>(null);
-
-  const handleCancel = async (id: string) => {
-    if (!confirm('Are you sure you want to cancel this scheduled email?')) return;
-    try {
-      setCancellingId(id);
-      await emailService.cancelEmail(id);
-      onRefresh();
-    } catch (err) {
-      console.error('Failed to cancel email', err);
-    } finally {
-      setCancellingId(null);
-    }
+  const formatScheduledTime = (dateStr: string | Date) => {
+    const d = new Date(dateStr);
+    return d.toLocaleTimeString('en-US', {
+      weekday: 'short',
+      hour: 'numeric',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true,
+    });
   };
 
-  const formatDate = (dateStr: string) => {
-    try {
-      const d = new Date(dateStr);
-      return d.toLocaleString([], {
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-      });
-    } catch {
-      return dateStr;
-    }
-  };
+  if (loading) {
+    return (
+      <div className="bg-white rounded-2xl border border-slate-100 p-12 text-center shadow-sm">
+        <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent mb-2" />
+        <p className="text-xs text-slate-400">Loading scheduled queue...</p>
+      </div>
+    );
+  }
 
-  const getStatusBadge = (status: string, errorMessage?: string | null) => {
-    switch (status) {
-      case 'scheduled':
-        return (
-          <span className="inline-flex items-center gap-1 rounded-full bg-indigo-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-indigo-400 border border-indigo-500/20">
-            <Clock className="h-3 w-3" />
-            <span>Scheduled</span>
-          </span>
-        );
-      case 'processing':
-        return (
-          <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-blue-400 border border-blue-500/20 animate-pulse">
-            <Play className="h-3 w-3" />
-            <span>Processing</span>
-          </span>
-        );
-      case 'rate_limited':
-        return (
-          <span
-            title={errorMessage || 'Hourly limit exceeded. Rescheduled to next clock hour.'}
-            className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-amber-400 border border-amber-500/20 cursor-help"
-          >
-            <AlertTriangle className="h-3 w-3" />
-            <span>Rate Limited</span>
-          </span>
-        );
-      default:
-        return (
-          <span className="rounded-full bg-slate-800 px-2.5 py-0.5 text-[11px] font-semibold text-slate-400">
-            {status}
-          </span>
-        );
-    }
-  };
+  if (emails.length === 0) {
+    return (
+      <div className="bg-white rounded-2xl border border-slate-100 p-12 text-center shadow-sm">
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 mb-3">
+          <Clock className="h-6 w-6" />
+        </div>
+        <h3 className="text-sm font-semibold text-slate-800">No Scheduled Emails</h3>
+        <p className="mt-1 text-xs text-slate-400 max-w-sm mx-auto">
+          Your BullMQ queue is currently clear. Click &quot;Compose&quot; to schedule a new campaign.
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900/60 shadow-xl backdrop-blur-sm overflow-hidden">
-      {/* Header & Search Bar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-5 border-b border-slate-800">
-        <div>
-          <h2 className="text-base font-bold text-white flex items-center gap-2">
-            <Clock className="h-4 w-4 text-indigo-400" />
-            <span>Scheduled Queue</span>
-            <span className="rounded-md bg-slate-800 px-2 py-0.5 text-xs text-slate-400">
-              {emails.length}
-            </span>
-          </h2>
-          <p className="text-xs text-slate-400 mt-0.5">BullMQ persistent delayed jobs awaiting worker dispatch.</p>
-        </div>
+    <div className="bg-white rounded-2xl border border-slate-100 divide-y divide-slate-100 shadow-sm overflow-hidden">
+      {emails.map((email) => {
+        const timeDisplay = formatScheduledTime(email.scheduledAt);
+        const recipientDisplay = email.recipient.includes('@')
+          ? email.recipient.split('@')[0]
+          : email.recipient;
 
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          {/* Elasticsearch Search Input */}
-          <div className="relative flex-1 sm:w-64">
-            <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => onSearch(e.target.value)}
-              placeholder="Search recipient, subject..."
-              className="w-full rounded-xl border border-slate-800 bg-slate-950/60 pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none transition-all"
-            />
-          </div>
-
-          <button
-            onClick={onRefresh}
-            disabled={loading}
-            title="Refresh Queue"
-            className="rounded-xl border border-slate-800 bg-slate-900 p-2 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors disabled:opacity-50"
+        return (
+          <div
+            key={email.id}
+            onClick={() => onSelectEmail && onSelectEmail(email)}
+            className="flex items-center justify-between px-6 py-4 hover:bg-slate-50/80 transition-colors cursor-pointer group"
           >
-            <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
-          </button>
-        </div>
-      </div>
+            {/* Left: Recipient Name */}
+            <div className="w-48 sm:w-56 shrink-0 flex items-center gap-2">
+              <span className="text-xs text-slate-400 font-normal">To:</span>
+              <span className="text-sm font-semibold text-slate-900 truncate">
+                {recipientDisplay}
+              </span>
+            </div>
 
-      {/* Table Content */}
-      {emails.length === 0 ? (
-        <div className="py-12 text-center">
-          <Clock className="mx-auto h-8 w-8 text-slate-600 mb-2" />
-          <p className="text-xs font-semibold text-slate-300">No scheduled emails in queue</p>
-          <p className="text-[11px] text-slate-500 mt-0.5">
-            {searchQuery
-              ? 'Try changing your search keywords'
-              : 'Compose a new campaign above to schedule emails'}
-          </p>
-        </div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-300">
-            <thead className="bg-slate-950/60 text-[11px] font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-800">
-              <tr>
-                <th className="px-5 py-3">Recipient</th>
-                <th className="px-5 py-3">Subject</th>
-                <th className="px-5 py-3">Scheduled Time</th>
-                <th className="px-5 py-3">Status</th>
-                <th className="px-5 py-3 text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800/60 font-medium">
-              {emails.map((email) => (
-                <tr key={email.id} className="hover:bg-slate-800/30 transition-colors">
-                  <td className="px-5 py-3.5 font-mono text-slate-200">{email.recipient}</td>
-                  <td className="px-5 py-3.5 text-slate-300 max-w-[240px] truncate" title={email.subject}>
-                    {email.subject}
-                  </td>
-                  <td className="px-5 py-3.5 text-slate-400 whitespace-nowrap">
-                    {formatDate(email.scheduledAt)}
-                  </td>
-                  <td className="px-5 py-3.5 whitespace-nowrap">
-                    {getStatusBadge(email.status, email.errorMessage)}
-                  </td>
-                  <td className="px-5 py-3.5 text-right whitespace-nowrap">
-                    <button
-                      onClick={() => handleCancel(email.id)}
-                      disabled={cancellingId === email.id}
-                      className="inline-flex items-center gap-1 rounded-lg border border-slate-800 bg-slate-900 px-2 py-1 text-[11px] text-slate-400 hover:border-rose-500/40 hover:bg-rose-500/10 hover:text-rose-400 transition-colors disabled:opacity-50"
-                    >
-                      <XCircle className="h-3 w-3" />
-                      <span>Cancel</span>
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+            {/* Middle: Badge + Subject + Body Snippet */}
+            <div className="flex-1 min-w-0 flex items-center gap-3 px-3">
+              {/* Orange Pill Badge matching Image 2 */}
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#FFF3E0] px-3 py-1 text-[11px] font-medium text-[#D97706] shrink-0 border border-amber-200/50">
+                <Clock className="h-3 w-3" />
+                <span>{timeDisplay}</span>
+              </span>
+
+              {/* Subject & Snippet */}
+              <div className="truncate text-xs">
+                <span className="font-semibold text-slate-900">{email.subject}</span>
+                <span className="text-slate-400 mx-1.5">-</span>
+                <span className="text-slate-500">{email.body.replace(/\n/g, ' ')}</span>
+              </div>
+            </div>
+
+            {/* Right: Actions / Star */}
+            <div className="flex items-center gap-3 shrink-0 ml-4">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCancel(email.id);
+                }}
+                className="opacity-0 group-hover:opacity-100 text-[11px] font-medium text-rose-600 hover:bg-rose-50 px-2 py-0.5 rounded transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={(e) => e.stopPropagation()}
+                className="text-slate-300 hover:text-amber-400 transition-colors p-1"
+              >
+                <Star className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 };

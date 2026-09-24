@@ -2,128 +2,85 @@
 
 import React from 'react';
 import { Email } from '../../types/email';
-import { CheckCircle, AlertCircle, RefreshCw, Send, ExternalLink } from 'lucide-react';
+import { CheckCircle2, Star, Send } from 'lucide-react';
 
 interface SentEmailsProps {
   emails: Email[];
   loading: boolean;
-  onRefresh: () => void;
+  onSelectEmail?: (email: Email) => void;
 }
 
-export const SentEmails: React.FC<SentEmailsProps> = ({ emails, loading, onRefresh }) => {
-  const formatDate = (dateStr?: string | null) => {
-    if (!dateStr) return '—';
-    try {
-      const d = new Date(dateStr);
-      return d.toLocaleString([], {
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-      });
-    } catch {
-      return dateStr;
-    }
-  };
-
-  const getStatusBadge = (status: string, errorMessage?: string | null) => {
-    if (status === 'sent') {
-      return (
-        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-400 border border-emerald-500/20">
-          <CheckCircle className="h-3 w-3" />
-          <span>Sent</span>
-        </span>
-      );
-    }
-
+export const SentEmails: React.FC<SentEmailsProps> = ({ emails, loading, onSelectEmail }) => {
+  if (loading) {
     return (
-      <span
-        title={errorMessage || 'Sending failed'}
-        className="inline-flex items-center gap-1 rounded-full bg-rose-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-rose-400 border border-rose-500/20 cursor-help"
-      >
-        <AlertCircle className="h-3 w-3" />
-        <span>Failed</span>
-      </span>
+      <div className="bg-white rounded-2xl border border-slate-100 p-12 text-center shadow-sm">
+        <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent mb-2" />
+        <p className="text-xs text-slate-400">Loading sent history...</p>
+      </div>
     );
-  };
+  }
+
+  if (emails.length === 0) {
+    return (
+      <div className="bg-white rounded-2xl border border-slate-100 p-12 text-center shadow-sm">
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 mb-3">
+          <CheckCircle2 className="h-6 w-6" />
+        </div>
+        <h3 className="text-sm font-semibold text-slate-800">No Sent Emails Yet</h3>
+        <p className="mt-1 text-xs text-slate-400 max-w-sm mx-auto">
+          Dispatched emails sent via Ethereal SMTP will appear here once workers process them.
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900/60 shadow-xl backdrop-blur-sm overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center justify-between p-5 border-b border-slate-800">
-        <div>
-          <h2 className="text-base font-bold text-white flex items-center gap-2">
-            <CheckCircle className="h-4 w-4 text-emerald-400" />
-            <span>Sent History</span>
-            <span className="rounded-md bg-slate-800 px-2 py-0.5 text-xs text-slate-400">
-              {emails.length}
-            </span>
-          </h2>
-          <p className="text-xs text-slate-400 mt-0.5">Live record of emails dispatched via Nodemailer & Ethereal SMTP.</p>
-        </div>
+    <div className="bg-white rounded-2xl border border-slate-100 divide-y divide-slate-100 shadow-sm overflow-hidden">
+      {emails.map((email) => {
+        const recipientDisplay = email.recipient.includes('@')
+          ? email.recipient.split('@')[0]
+          : email.recipient;
 
-        <button
-          onClick={onRefresh}
-          disabled={loading}
-          title="Refresh History"
-          className="rounded-xl border border-slate-800 bg-slate-900 p-2 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors disabled:opacity-50"
-        >
-          <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
-        </button>
-      </div>
+        return (
+          <div
+            key={email.id}
+            onClick={() => onSelectEmail && onSelectEmail(email)}
+            className="flex items-center justify-between px-6 py-4 hover:bg-slate-50/80 transition-colors cursor-pointer group"
+          >
+            {/* Left: Recipient Name */}
+            <div className="w-48 sm:w-56 shrink-0 flex items-center gap-2">
+              <span className="text-xs text-slate-400 font-normal">To:</span>
+              <span className="text-sm font-semibold text-slate-900 truncate">
+                {recipientDisplay}
+              </span>
+            </div>
 
-      {/* Table Content */}
-      {emails.length === 0 ? (
-        <div className="py-12 text-center">
-          <Send className="mx-auto h-8 w-8 text-slate-600 mb-2" />
-          <p className="text-xs font-semibold text-slate-300">No sent emails recorded yet</p>
-          <p className="text-[11px] text-slate-500 mt-0.5">Dispatched emails will appear here once processed by workers</p>
-        </div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-300">
-            <thead className="bg-slate-950/60 text-[11px] font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-800">
-              <tr>
-                <th className="px-5 py-3">Recipient</th>
-                <th className="px-5 py-3">Subject</th>
-                <th className="px-5 py-3">Dispatched Time</th>
-                <th className="px-5 py-3">Attempts</th>
-                <th className="px-5 py-3">Status</th>
-                <th className="px-5 py-3 text-right">Preview</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800/60 font-medium">
-              {emails.map((email) => (
-                <tr key={email.id} className="hover:bg-slate-800/30 transition-colors">
-                  <td className="px-5 py-3.5 font-mono text-slate-200">{email.recipient}</td>
-                  <td className="px-5 py-3.5 text-slate-300 max-w-[240px] truncate" title={email.subject}>
-                    {email.subject}
-                  </td>
-                  <td className="px-5 py-3.5 text-slate-400 whitespace-nowrap">
-                    {formatDate(email.sentAt || email.updatedAt)}
-                  </td>
-                  <td className="px-5 py-3.5 font-mono text-slate-400">{email.attempts}</td>
-                  <td className="px-5 py-3.5 whitespace-nowrap">
-                    {getStatusBadge(email.status, email.errorMessage)}
-                  </td>
-                  <td className="px-5 py-3.5 text-right whitespace-nowrap">
-                    <a
-                      href="https://ethereal.email/messages"
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1 rounded-lg border border-slate-800 bg-slate-900 px-2 py-1 text-[11px] text-indigo-400 hover:border-indigo-500/40 hover:bg-indigo-500/10 hover:text-indigo-300 transition-colors"
-                    >
-                      <span>Ethereal</span>
-                      <ExternalLink className="h-3 w-3" />
-                    </a>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+            {/* Middle: Sent Badge + Subject + Body Snippet matching Image 3 */}
+            <div className="flex-1 min-w-0 flex items-center gap-3 px-3">
+              <span className="inline-flex items-center gap-1 rounded-full bg-[#F3F4F6] px-3 py-0.5 text-[11px] font-medium text-slate-600 shrink-0 border border-slate-200/60">
+                <span>Sent</span>
+              </span>
+
+              {/* Subject & Snippet */}
+              <div className="truncate text-xs">
+                <span className="font-semibold text-slate-900">{email.subject}</span>
+                <span className="text-slate-400 mx-1.5">-</span>
+                <span className="text-slate-500">{email.body.replace(/\n/g, ' ')}</span>
+              </div>
+            </div>
+
+            {/* Right: Star */}
+            <div className="flex items-center gap-3 shrink-0 ml-4">
+              <button
+                onClick={(e) => e.stopPropagation()}
+                className="text-slate-300 hover:text-amber-400 transition-colors p-1"
+              >
+                <Star className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 };

@@ -15,4 +15,12 @@ export interface Email {
   errorMessage?: string | null;
   createdAt: string;
   updatedAt: string;
+  sender?: {
+    id?: string;
+    email: string;
+  };
+  campaign?: {
+    id?: string;
+    subject: string;
+  };
 }
