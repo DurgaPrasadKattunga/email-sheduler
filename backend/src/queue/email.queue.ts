@@ -5,10 +5,13 @@ import { SendEmailJobData, SendEmailJobResult, QueueStats } from '../types/queue
 
 export const EMAIL_QUEUE_NAME = 'email-queue';
 
+const isUpstash = env.REDIS_HOST.includes('upstash.io');
+
 export const queueRedisConnection = {
   host: env.REDIS_HOST,
   port: env.REDIS_PORT,
   password: env.REDIS_PASSWORD || undefined,
+  tls: isUpstash ? {} : undefined,
   maxRetriesPerRequest: null,
   enableReadyCheck: false,
 };

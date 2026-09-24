@@ -2,10 +2,13 @@ import Redis from 'ioredis';
 import { env } from './env';
 import { logger } from '../utils/logger';
 
+const isUpstash = env.REDIS_HOST.includes('upstash.io');
+
 export const redisConnection = new Redis({
   host: env.REDIS_HOST,
   port: env.REDIS_PORT,
   password: env.REDIS_PASSWORD || undefined,
+  tls: isUpstash ? {} : undefined,
   maxRetriesPerRequest: null,
   lazyConnect: true,
   enableReadyCheck: true,
