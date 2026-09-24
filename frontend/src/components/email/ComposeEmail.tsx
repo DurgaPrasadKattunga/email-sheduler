@@ -1,14 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { emailService } from '../../services/email';
 import {
   ArrowLeft,
   Paperclip,
   Clock,
-  Send,
   Upload,
-  Sparkles,
   ChevronDown,
   X,
   Bold,
@@ -21,7 +19,8 @@ import {
   Strikethrough,
   Undo,
   Redo,
-  Calendar,
+  Sparkles,
+  ArrowUpToLine,
 } from 'lucide-react';
 
 interface ComposeEmailProps {
@@ -39,14 +38,18 @@ export const ComposeEmail: React.FC<ComposeEmailProps> = ({
   const [body, setBody] = useState('');
   const [recipients, setRecipients] = useState<string[]>([]);
   const [rawInput, setRawInput] = useState('');
-  const [delayMs, setDelayMs] = useState(2000);
-  const [hourlyLimit, setHourlyLimit] = useState(100);
+  const [delayMs, setDelayMs] = useState<number | string>('00');
+  const [hourlyLimit, setHourlyLimit] = useState<number | string>('00');
   const [startTime, setStartTime] = useState<string>('');
   const [showSendLater, setShowSendLater] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [attachmentsCount, setAttachmentsCount] = useState<number>(0);
+  const [showAllRecipients, setShowAllRecipients] = useState(false);
 
-  // Parse emails from raw string
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Parse emails from raw string or CSV
   const parseEmails = (text: string) => {
     const regex = /[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+/g;
     const matches = text.match(regex) || [];
@@ -62,21 +65,13 @@ export const ComposeEmail: React.FC<ComposeEmailProps> = ({
       const content = event.target?.result as string;
       if (content) {
         const found = parseEmails(content);
-        setRecipients((prev) => Array.from(new Set([...prev, ...found])));
+        if (found.length > 0) {
+          setRecipients((prev) => Array.from(new Set([...prev, ...found])));
+          setAttachmentsCount(1);
+        }
       }
     };
     reader.readAsText(file);
-  };
-
-  const handleLoadSample = () => {
-    const sample = [
-      'sarah.connor@cyberdyne.io',
-      'john.wick@continental.org',
-      'bruce.wayne@waynecorp.com',
-      'clark.kent@dailyplanet.news',
-      'tony.stark@starkindustries.com',
-    ];
-    setRecipients((prev) => Array.from(new Set([...prev, ...sample])));
   };
 
   const handleAddManualRecipient = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -120,7 +115,6 @@ export const ComposeEmail: React.FC<ComposeEmailProps> = ({
     if (e) e.preventDefault();
     setError(null);
 
-    // Merge any pending raw input
     let finalRecipients = [...recipients];
     if (rawInput.trim()) {
       const extra = parseEmails(rawInput);
@@ -128,12 +122,12 @@ export const ComposeEmail: React.FC<ComposeEmailProps> = ({
     }
 
     if (finalRecipients.length === 0) {
-      setError('Please provide at least one recipient email or upload a CSV.');
+      setError('Please provide recipient email(s) or click "Upload List".');
       return;
     }
 
     if (!subject.trim()) {
-      setError('Please provide a subject line.');
+      setError('Please enter a subject line.');
       return;
     }
 
@@ -161,9 +155,12 @@ export const ComposeEmail: React.FC<ComposeEmailProps> = ({
     }
   };
 
+  const displayedRecipients = showAllRecipients ? recipients : recipients.slice(0, 3);
+  const hiddenCount = recipients.length - 3;
+
   return (
-    <div className="relative bg-white rounded-2xl border border-slate-100 shadow-sm min-h-[650px] flex flex-col">
-      {/* Top Header Bar matching Image 5 */}
+    <div className="relative bg-white rounded-2xl border border-slate-100 shadow-sm min-h-[680px] flex flex-col">
+      {/* Top Header Bar matching Figma Images 5, 6, 7 */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
         <div className="flex items-center gap-3">
           {onBack && (
@@ -179,18 +176,22 @@ export const ComposeEmail: React.FC<ComposeEmailProps> = ({
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Attachment Icon */}
-          <label className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer" title="Attach CSV leads or file">
+          {/* Attachment Icon with badge matching Image 6 & 7 */}
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="flex items-center gap-1 p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+            title="Attach file / CSV leads"
+          >
             <Paperclip className="h-4 w-4" />
-            <input
-              type="file"
-              accept=".csv,.txt"
-              onChange={handleFileUpload}
-              className="hidden"
-            />
-          </label>
+            {attachmentsCount > 0 && (
+              <span className="text-[11px] font-bold text-emerald-600">
+                {attachmentsCount}
+              </span>
+            )}
+          </button>
 
-          {/* Clock / Send Later trigger icon */}
+          {/* Clock / Schedule Icon */}
           <button
             type="button"
             onClick={() => setShowSendLater(!showSendLater)}
@@ -199,7 +200,7 @@ export const ComposeEmail: React.FC<ComposeEmailProps> = ({
                 ? 'text-[#009A49] bg-emerald-50'
                 : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
             }`}
-            title="Schedule / Send Later"
+            title="Schedule Date & Time"
           >
             <Clock className="h-4 w-4" />
             {startTime && (
@@ -207,20 +208,14 @@ export const ComposeEmail: React.FC<ComposeEmailProps> = ({
             )}
           </button>
 
-          {/* Primary Green Send Button matching Image 5 */}
+          {/* Primary Green "Send Later" Pill Button matching Figma Images 6 & 7 */}
           <button
             type="button"
             onClick={() => handleSubmit()}
             disabled={loading}
-            className="flex items-center gap-2 rounded-full border border-[#009A49] bg-white hover:bg-[#009A49] text-[#009A49] hover:text-white px-6 py-1.5 text-xs font-semibold shadow-sm transition-all disabled:opacity-50"
+            className="rounded-full border border-[#009A49] bg-white hover:bg-[#009A49] text-[#009A49] hover:text-white px-5 py-1.5 text-xs font-semibold transition-all shadow-sm disabled:opacity-50"
           >
-            {loading ? (
-              <span>Scheduling...</span>
-            ) : (
-              <>
-                <span>{startTime ? 'Schedule' : 'Send'}</span>
-              </>
-            )}
+            {loading ? 'Processing...' : 'Send Later'}
           </button>
         </div>
       </div>
@@ -243,14 +238,15 @@ export const ComposeEmail: React.FC<ComposeEmailProps> = ({
           </div>
         </div>
 
-        {/* To / Recipients Field */}
+        {/* To Field with "Upload List" button matching Images 6 & 7 */}
         <div className="flex items-start gap-4 text-xs border-b border-slate-100 pb-3">
           <span className="w-12 text-slate-400 font-medium shrink-0 pt-2">To</span>
-          <div className="flex-1 flex flex-wrap items-center gap-1.5">
-            {recipients.map((email) => (
+          <div className="flex-1 flex flex-wrap items-center gap-2">
+            {/* Recipient Chips matching Image 7 */}
+            {displayedRecipients.map((email) => (
               <span
                 key={email}
-                className="inline-flex items-center gap-1 rounded-md bg-[#F3F4F6] px-2.5 py-1 text-xs font-medium text-slate-800 border border-slate-200/60"
+                className="inline-flex items-center gap-1.5 rounded-full bg-[#E6F4EA] border border-emerald-400/80 px-3 py-1 text-xs font-medium text-slate-800"
               >
                 <span>{email}</span>
                 <button
@@ -263,23 +259,44 @@ export const ComposeEmail: React.FC<ComposeEmailProps> = ({
               </span>
             ))}
 
+            {/* "+N" Count Pill matching Image 7 */}
+            {recipients.length > 3 && !showAllRecipients && (
+              <button
+                type="button"
+                onClick={() => setShowAllRecipients(true)}
+                className="inline-flex items-center justify-center rounded-full bg-[#E6F4EA] border border-emerald-400/80 px-2.5 py-1 text-xs font-bold text-emerald-800 hover:bg-[#D9F2E0]"
+              >
+                +{hiddenCount}
+              </button>
+            )}
+
             <input
               type="text"
               value={rawInput}
               onChange={(e) => setRawInput(e.target.value)}
               onKeyDown={handleAddManualRecipient}
-              placeholder={recipients.length === 0 ? "recipient@example.com (or press Enter)" : "Add more..."}
-              className="flex-1 min-w-[200px] text-xs text-slate-800 placeholder-slate-400 bg-transparent focus:outline-none py-1.5"
+              placeholder={recipients.length === 0 ? "recipient@example.com" : ""}
+              className="flex-1 min-w-[150px] text-xs text-slate-800 placeholder-slate-400 bg-transparent focus:outline-none py-1"
             />
+          </div>
 
+          {/* "Upload List" Link Button matching Images 6 & 7 */}
+          <div className="shrink-0 pt-1">
             <button
               type="button"
-              onClick={handleLoadSample}
-              className="ml-auto inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors border border-emerald-200"
+              onClick={() => fileInputRef.current?.click()}
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-[#009A49] hover:underline"
             >
-              <Sparkles className="h-3 w-3" />
-              <span>Load 5 Leads</span>
+              <ArrowUpToLine className="h-3.5 w-3.5" />
+              <span>Upload List</span>
             </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".csv,.txt"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
           </div>
         </div>
 
@@ -295,28 +312,26 @@ export const ComposeEmail: React.FC<ComposeEmailProps> = ({
           />
         </div>
 
-        {/* Inline Throttling & Rate Limit Settings matching Image 5 */}
+        {/* Inline Throttling & Rate Limit Settings matching Figma */}
         <div className="flex flex-wrap items-center gap-6 text-xs text-slate-600 py-1">
           <div className="flex items-center gap-2">
             <span>Delay between 2 emails</span>
             <input
-              type="number"
+              type="text"
               value={delayMs}
-              onChange={(e) => setDelayMs(Number(e.target.value))}
-              className="w-16 rounded-lg bg-[#F3F4F6] px-2.5 py-1 text-center font-mono font-semibold text-slate-900 border border-slate-200 focus:outline-none focus:border-emerald-500"
+              onChange={(e) => setDelayMs(e.target.value)}
+              className="w-14 rounded-lg bg-[#F3F4F6] px-2 py-1 text-center font-mono font-medium text-slate-900 border border-slate-200 focus:outline-none focus:border-emerald-500"
             />
-            <span className="text-[11px] text-slate-400">ms</span>
           </div>
 
           <div className="flex items-center gap-2">
             <span>Hourly Limit</span>
             <input
-              type="number"
+              type="text"
               value={hourlyLimit}
-              onChange={(e) => setHourlyLimit(Number(e.target.value))}
-              className="w-16 rounded-lg bg-[#F3F4F6] px-2.5 py-1 text-center font-mono font-semibold text-slate-900 border border-slate-200 focus:outline-none focus:border-emerald-500"
+              onChange={(e) => setHourlyLimit(e.target.value)}
+              className="w-14 rounded-lg bg-[#F3F4F6] px-2 py-1 text-center font-mono font-medium text-slate-900 border border-slate-200 focus:outline-none focus:border-emerald-500"
             />
-            <span className="text-[11px] text-slate-400">/hr</span>
           </div>
 
           {startTime && (
@@ -334,7 +349,7 @@ export const ComposeEmail: React.FC<ComposeEmailProps> = ({
           )}
         </div>
 
-        {/* Rich Formatting Toolbar matching Image 5 */}
+        {/* Rich Formatting Toolbar matching Figma */}
         <div className="flex items-center gap-1 py-2 px-1 border-t border-b border-slate-100 text-slate-500 text-xs">
           <button type="button" className="p-1.5 hover:bg-slate-100 rounded text-slate-600" title="Undo"><Undo className="h-3.5 w-3.5" /></button>
           <button type="button" className="p-1.5 hover:bg-slate-100 rounded text-slate-600" title="Redo"><Redo className="h-3.5 w-3.5" /></button>
@@ -350,17 +365,32 @@ export const ComposeEmail: React.FC<ComposeEmailProps> = ({
           <button type="button" className="p-1.5 hover:bg-slate-100 rounded text-slate-600" title="Quote"><Quote className="h-3.5 w-3.5" /></button>
         </div>
 
-        {/* Message Body Textarea */}
+        {/* Message Body Area */}
         <textarea
           value={body}
           onChange={(e) => setBody(e.target.value)}
-          placeholder="Type Your Reply... (Supports {{name}}, {{company}} variable tags)"
-          rows={12}
+          placeholder="Type Your Reply..."
+          rows={10}
           className="w-full flex-1 resize-none text-xs text-slate-800 placeholder-slate-400 bg-transparent focus:outline-none leading-relaxed"
         />
+
+        {/* Attached thumbnail preview matching Images 6 & 7 */}
+        {attachmentsCount > 0 && (
+          <div className="pt-2 border-t border-slate-100">
+            <div className="inline-flex items-center gap-2.5 rounded-xl border border-slate-200 bg-slate-50 p-2 text-xs">
+              <div className="h-10 w-12 rounded-lg bg-emerald-600/10 flex items-center justify-center text-emerald-700 font-bold text-xs">
+                CSV
+              </div>
+              <div>
+                <div className="font-semibold text-slate-800">{recipients.length} Email Leads Detected</div>
+                <div className="text-[10px] text-slate-400">Ready for BullMQ dispatch</div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* "Send Later" Popover Modal matching Image 5 */}
+      {/* "Send Later" Popover Modal */}
       {showSendLater && (
         <div className="absolute top-14 right-6 w-80 bg-white rounded-2xl border border-slate-100 shadow-2xl p-5 z-50 space-y-4 animate-in fade-in zoom-in-95 duration-150">
           <div className="flex items-center justify-between">
@@ -373,7 +403,6 @@ export const ComposeEmail: React.FC<ComposeEmailProps> = ({
             </button>
           </div>
 
-          {/* Custom Date & Time Picker */}
           <div>
             <label className="text-[11px] font-semibold text-slate-500 mb-1 block">
               Pick date & time
@@ -386,7 +415,6 @@ export const ComposeEmail: React.FC<ComposeEmailProps> = ({
             />
           </div>
 
-          {/* Preset Shortcuts matching Image 5 */}
           <div className="space-y-1 pt-1 border-t border-slate-100 text-xs text-slate-700">
             <button
               type="button"
@@ -425,7 +453,6 @@ export const ComposeEmail: React.FC<ComposeEmailProps> = ({
             </button>
           </div>
 
-          {/* Actions matching Image 5 */}
           <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
             <button
               type="button"
