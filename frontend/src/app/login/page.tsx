@@ -21,7 +21,7 @@ export default function LoginPage() {
     if (e) e.preventDefault();
     try {
       setLoading(true);
-      await authService.devLogin();
+      await authService.devLogin(email);
       router.push('/dashboard');
     } catch (err) {
       console.error('Dev login failed', err);

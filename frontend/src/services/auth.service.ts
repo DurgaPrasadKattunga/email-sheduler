@@ -11,8 +11,8 @@ export const authService = {
     }
   },
 
-  devLogin: async (): Promise<{ token: string; user: User }> => {
-    const response = await api.post('/auth/dev-login');
+  devLogin: async (email?: string): Promise<{ token: string; user: User }> => {
+    const response = await api.post('/auth/dev-login', { email });
     const { token, user } = response.data;
     if (typeof window !== 'undefined') {
       localStorage.setItem('token', token);

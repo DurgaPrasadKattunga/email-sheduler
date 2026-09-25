@@ -356,6 +356,7 @@ function DashboardContent() {
               email={selectedEmail}
               onBack={() => setSelectedEmail(null)}
               onCancelSchedule={handleCancelEmail}
+              currentUser={user}
             />
           ) : activeTab === 'compose' ? (
             /* Compose Email Form matching Image 5 */

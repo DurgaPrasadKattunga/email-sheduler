@@ -123,16 +123,36 @@ export const authController = {
    * POST /auth/dev-login - Development helper to issue JWT token for test user
    */
   devLogin: asyncHandler(async (req: Request, res: Response) => {
-    let user = await prisma.user.findFirst();
-    if (!user) {
-      user = await prisma.user.create({
-        data: {
-          googleId: 'dev_user_001',
-          name: 'Alex Morgan',
-          email: 'alex.morgan@example.com',
-          avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=256&q=80',
-        },
-      });
+    const inputEmail = req.body?.email || req.query?.email;
+    let user;
+
+    if (inputEmail && typeof inputEmail === 'string' && inputEmail.trim()) {
+      const cleanEmail = inputEmail.trim().toLowerCase();
+      user = await prisma.user.findUnique({ where: { email: cleanEmail } });
+      if (!user) {
+        const namePart = cleanEmail.split('@')[0];
+        const formattedName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
+        user = await prisma.user.create({
+          data: {
+            googleId: `custom_${Date.now()}`,
+            name: formattedName,
+            email: cleanEmail,
+            avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(formattedName)}&background=009A49&color=fff`,
+          },
+        });
+      }
+    } else {
+      user = await prisma.user.findFirst();
+      if (!user) {
+        user = await prisma.user.create({
+          data: {
+            googleId: 'dev_user_001',
+            name: 'Oliver Brown',
+            email: 'oliver.brown@domain.io',
+            avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=256&q=80',
+          },
+        });
+      }
     }
 
     const token = authService.generateJwt({

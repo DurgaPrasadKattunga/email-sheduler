@@ -4,20 +4,32 @@ import React from 'react';
 import { Email } from '../../types/email';
 import { ArrowLeft, Star, Archive, Trash2, ChevronDown, Paperclip, Clock, Send, CheckCircle2, AlertTriangle } from 'lucide-react';
 
+import { User } from '../../types/auth';
+
 interface EmailDetailViewProps {
   email: Email;
   onBack: () => void;
   onCancelSchedule?: (id: string) => void;
+  currentUser?: User | null;
 }
 
 export const EmailDetailView: React.FC<EmailDetailViewProps> = ({
   email,
   onBack,
   onCancelSchedule,
+  currentUser,
 }) => {
   const isScheduled = email.status === 'scheduled' || email.status === 'rate_limited';
-  const senderEmail = email.sender?.email || 'outreach@ethereal.email';
-  const senderName = senderEmail.split('@')[0];
+  const senderName =
+    currentUser?.name ||
+    (email.sender?.email && !email.sender.email.startsWith('outreach')
+      ? email.sender.email.split('@')[0]
+      : 'Oliver Brown');
+  const senderEmail =
+    currentUser?.email ||
+    (email.sender?.email && !email.sender.email.includes('outreach@')
+      ? email.sender.email
+      : 'oliver.brown@domain.io');
 
   const formattedDate = email.sentAt
     ? new Date(email.sentAt).toLocaleString('en-US', {

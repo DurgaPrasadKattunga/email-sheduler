@@ -51,7 +51,7 @@ export const schedulerService = {
         const newSender = await prisma.sender.create({
           data: {
             userId,
-            email: `${user.email.split('@')[0]}@ethereal.email`,
+            email: user.email,
             etherealUsername: `ethereal_${user.id.slice(0, 8)}`,
             etherealPasswordEncrypted: 'default_ethereal_secret',
           },
