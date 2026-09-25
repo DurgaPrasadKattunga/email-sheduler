@@ -45,23 +45,28 @@ export const SentEmails: React.FC<SentEmailsProps> = ({ emails, loading, onSelec
           <div
             key={email.id}
             onClick={() => onSelectEmail && onSelectEmail(email)}
-            className="flex items-center justify-between px-6 py-4 hover:bg-slate-50/80 transition-colors cursor-pointer group"
+            className="p-4 sm:px-6 sm:py-4 hover:bg-slate-50/80 transition-colors cursor-pointer group flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-4"
           >
-            {/* Left: Recipient Name */}
-            <div className="w-48 sm:w-56 shrink-0 flex items-center gap-2">
-              <span className="text-xs text-slate-400 font-normal">To:</span>
-              <span className="text-sm font-semibold text-slate-900 truncate">
-                {recipientDisplay}
+            {/* Top row on mobile / Left on desktop */}
+            <div className="flex items-center justify-between sm:justify-start gap-2 min-w-0 sm:w-56 shrink-0">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className="text-xs text-slate-400 font-normal">To:</span>
+                <span className="text-sm font-semibold text-slate-900 truncate">
+                  {recipientDisplay}
+                </span>
+              </div>
+              {/* Mobile-only badge */}
+              <span className="sm:hidden inline-flex items-center gap-1 rounded-full bg-[#F3F4F6] px-2.5 py-0.5 text-[10px] font-medium text-slate-600 shrink-0 border border-slate-200/60">
+                <span>Sent</span>
               </span>
             </div>
 
-            {/* Middle: Sent Badge + Subject + Body Snippet matching Image 3 */}
-            <div className="flex-1 min-w-0 flex items-center gap-3 px-3">
-              <span className="inline-flex items-center gap-1 rounded-full bg-[#F3F4F6] px-3 py-0.5 text-[11px] font-medium text-slate-600 shrink-0 border border-slate-200/60">
+            {/* Middle: Desktop badge + Subject + Snippet */}
+            <div className="flex-1 min-w-0 flex items-center gap-3">
+              <span className="hidden sm:inline-flex items-center gap-1 rounded-full bg-[#F3F4F6] px-3 py-0.5 text-[11px] font-medium text-slate-600 shrink-0 border border-slate-200/60">
                 <span>Sent</span>
               </span>
 
-              {/* Subject & Snippet */}
               <div className="truncate text-xs">
                 <span className="font-semibold text-slate-900">{email.subject}</span>
                 <span className="text-slate-400 mx-1.5">-</span>
@@ -70,7 +75,7 @@ export const SentEmails: React.FC<SentEmailsProps> = ({ emails, loading, onSelec
             </div>
 
             {/* Right: Star */}
-            <div className="flex items-center gap-3 shrink-0 ml-4">
+            <div className="flex items-center justify-end gap-2 shrink-0">
               <button
                 onClick={(e) => e.stopPropagation()}
                 className="text-slate-300 hover:text-amber-400 transition-colors p-1"

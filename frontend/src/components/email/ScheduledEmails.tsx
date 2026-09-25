@@ -63,20 +63,27 @@ export const ScheduledEmails: React.FC<ScheduledEmailsProps> = ({
           <div
             key={email.id}
             onClick={() => onSelectEmail && onSelectEmail(email)}
-            className="flex items-center justify-between px-6 py-4 hover:bg-slate-50/80 transition-colors cursor-pointer group"
+            className="p-4 sm:px-6 sm:py-4 hover:bg-slate-50/80 transition-colors cursor-pointer group flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-4"
           >
-            {/* Left: Recipient Name */}
-            <div className="w-48 sm:w-56 shrink-0 flex items-center gap-2">
-              <span className="text-xs text-slate-400 font-normal">To:</span>
-              <span className="text-sm font-semibold text-slate-900 truncate">
-                {recipientDisplay}
+            {/* Top row on mobile / Left column on desktop: Recipient & Badge */}
+            <div className="flex items-center justify-between sm:justify-start gap-2 min-w-0 sm:w-56 shrink-0">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className="text-xs text-slate-400 font-normal">To:</span>
+                <span className="text-sm font-semibold text-slate-900 truncate">
+                  {recipientDisplay}
+                </span>
+              </div>
+              {/* Mobile-only time badge */}
+              <span className="sm:hidden inline-flex items-center gap-1 rounded-full bg-[#FFF3E0] px-2.5 py-0.5 text-[10px] font-medium text-[#D97706] shrink-0 border border-amber-200/50">
+                <Clock className="h-2.5 w-2.5" />
+                <span>{timeDisplay}</span>
               </span>
             </div>
 
-            {/* Middle: Badge + Subject + Body Snippet */}
-            <div className="flex-1 min-w-0 flex items-center gap-3 px-3">
-              {/* Orange Pill Badge matching Image 2 */}
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#FFF3E0] px-3 py-1 text-[11px] font-medium text-[#D97706] shrink-0 border border-amber-200/50">
+            {/* Desktop badge & Subject + Body Snippet */}
+            <div className="flex-1 min-w-0 flex items-center gap-3">
+              {/* Desktop time badge */}
+              <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-[#FFF3E0] px-3 py-1 text-[11px] font-medium text-[#D97706] shrink-0 border border-amber-200/50">
                 <Clock className="h-3 w-3" />
                 <span>{timeDisplay}</span>
               </span>
@@ -89,16 +96,16 @@ export const ScheduledEmails: React.FC<ScheduledEmailsProps> = ({
               </div>
             </div>
 
-            {/* Right: Actions / Star */}
-            <div className="flex items-center gap-3 shrink-0 ml-4">
+            {/* Actions / Cancel button */}
+            <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0 pt-1 sm:pt-0 border-t sm:border-t-0 border-slate-50">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   onCancel(email.id);
                 }}
-                className="opacity-0 group-hover:opacity-100 text-[11px] font-medium text-rose-600 hover:bg-rose-50 px-2 py-0.5 rounded transition-all"
+                className="text-[11px] font-semibold text-rose-600 hover:bg-rose-50 px-2 py-0.5 rounded transition-all sm:opacity-0 sm:group-hover:opacity-100"
               >
-                Cancel
+                Cancel Send
               </button>
               <button
                 onClick={(e) => e.stopPropagation()}

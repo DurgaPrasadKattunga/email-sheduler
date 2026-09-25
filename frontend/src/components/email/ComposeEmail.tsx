@@ -159,10 +159,10 @@ export const ComposeEmail: React.FC<ComposeEmailProps> = ({
   const hiddenCount = recipients.length - 3;
 
   return (
-    <div className="relative bg-white rounded-2xl border border-slate-100 shadow-sm min-h-[680px] flex flex-col">
+    <div className="relative bg-white rounded-2xl border border-slate-100 shadow-sm min-h-[600px] flex flex-col">
       {/* Top Header Bar matching Figma Images 5, 6, 7 */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-        <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4 border-b border-slate-100">
+        <div className="flex items-center gap-2.5 sm:gap-3">
           {onBack && (
             <button
               type="button"
@@ -172,10 +172,10 @@ export const ComposeEmail: React.FC<ComposeEmailProps> = ({
               <ArrowLeft className="h-5 w-5" />
             </button>
           )}
-          <h1 className="text-base font-bold text-slate-900">Compose New Email</h1>
+          <h1 className="text-sm sm:text-base font-bold text-slate-900 truncate">Compose New Email</h1>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           {/* Attachment Icon with badge matching Image 6 & 7 */}
           <button
             type="button"
@@ -213,7 +213,7 @@ export const ComposeEmail: React.FC<ComposeEmailProps> = ({
             type="button"
             onClick={() => handleSubmit()}
             disabled={loading}
-            className="rounded-full border border-[#009A49] bg-white hover:bg-[#009A49] text-[#009A49] hover:text-white px-5 py-1.5 text-xs font-semibold transition-all shadow-sm disabled:opacity-50"
+            className="rounded-full border border-[#009A49] bg-white hover:bg-[#009A49] text-[#009A49] hover:text-white px-3.5 sm:px-5 py-1.5 text-xs font-semibold transition-all shadow-sm disabled:opacity-50"
           >
             {loading ? 'Processing...' : 'Send Later'}
           </button>
@@ -222,13 +222,13 @@ export const ComposeEmail: React.FC<ComposeEmailProps> = ({
 
       {/* Error banner */}
       {error && (
-        <div className="mx-6 mt-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs font-medium text-rose-700">
+        <div className="mx-4 sm:mx-6 mt-3 p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs font-medium text-rose-700">
           {error}
         </div>
       )}
 
       {/* Main Form Fields */}
-      <div className="p-6 space-y-4 flex-1 flex flex-col">
+      <div className="p-4 sm:p-6 space-y-4 flex-1 flex flex-col">
         {/* From Field */}
         <div className="flex items-center gap-4 text-xs">
           <span className="w-12 text-slate-400 font-medium shrink-0">From</span>
@@ -392,7 +392,7 @@ export const ComposeEmail: React.FC<ComposeEmailProps> = ({
 
       {/* "Send Later" Popover Modal */}
       {showSendLater && (
-        <div className="absolute top-14 right-6 w-80 bg-white rounded-2xl border border-slate-100 shadow-2xl p-5 z-50 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+        <div className="fixed inset-x-4 top-20 sm:absolute sm:inset-x-auto sm:top-14 sm:right-6 sm:w-80 bg-white rounded-2xl border border-slate-100 shadow-2xl p-5 z-50 space-y-4 animate-in fade-in zoom-in-95 duration-150">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold text-slate-900">Send Later</h3>
             <button
